@@ -9,9 +9,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -73,6 +73,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings', [App\Http\Controllers\Admin\AdminController::class, 'settings'])->name('admin.settings');
         Route::get('/logs', [App\Http\Controllers\Admin\AdminController::class, 'logs'])->name('admin.logs');
         Route::post('/logs/cleanup', [App\Http\Controllers\Admin\AdminController::class, 'logsCleanup'])->name('admin.logs.cleanup');
+        
+        // Workflow management routes
+        Route::resource('workflows', App\Http\Controllers\Admin\WorkflowController::class, ['as' => 'admin']);
+        Route::post('/workflows/{workflow}/toggle-active', [App\Http\Controllers\Admin\WorkflowController::class, 'toggleActive'])
+            ->name('admin.workflows.toggle-active');
     });
 });
 

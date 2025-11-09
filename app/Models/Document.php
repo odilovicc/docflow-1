@@ -114,6 +114,28 @@ class Document extends Model implements HasMedia
         };
     }
 
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    /**
+     * Set status for Symfony Workflow
+     * Required by MethodMarkingStore
+     */
+    public function setStatus(string $status): void
+    {
+        \Log::info("Document::setStatus called", [
+            'document_id' => $this->id,
+            'old_status' => $this->status,
+            'new_status' => $status,
+            'document_state' => $this->toArray()
+        ]);
+        
+        $this->status = $status;
+        $this->current_step = $status;
+    }
+
     /**
      * Scope для оптимизированной загрузки с связанными моделями
      */

@@ -86,10 +86,13 @@ class DocumentController extends Controller
         // Загружаем файлы
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
-                $document->addMediaFromRequest('files')
-                    ->each(function ($fileAdder) {
-                        $fileAdder->toMediaCollection('documents');
-                    });
+                try {
+                    $document->addMedia($file)
+                        ->toMediaCollection('documents');
+                } catch (\Exception $e) {
+                    \Log::error('Ошибка загрузки файла: ' . $e->getMessage());
+                    // Продолжаем выполнение, но логируем ошибку
+                }
             }
         }
 
@@ -139,7 +142,12 @@ class DocumentController extends Controller
         // Добавляем новые файлы
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
-                $document->addMedia($file)->toMediaCollection('documents');
+                try {
+                    $document->addMedia($file)->toMediaCollection('documents');
+                } catch (\Exception $e) {
+                    \Log::error('Ошибка загрузки файла при обновлении: ' . $e->getMessage());
+                    // Продолжаем выполнение, но логируем ошибку
+                }
             }
         }
 

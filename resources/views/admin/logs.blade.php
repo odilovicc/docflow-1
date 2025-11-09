@@ -118,7 +118,7 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500">
-                                @if($log->properties->count() > 0)
+                                @if($log->properties && $log->properties->count() > 0)
                                 <button type="button" onclick="toggleProperties('{{ $log->id }}')" 
                                         class="text-indigo-600 hover:text-indigo-900">
                                     Показать ({{ $log->properties->count() }})

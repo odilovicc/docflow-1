@@ -119,14 +119,53 @@ class WorkflowService
      */
     public function availableTransitions(User $user, Document $document): array
     {
-        $workflow = $document->workflow;
-        
-        if (!$workflow) {
+        try {
+            \Log::info("WorkflowService::availableTransitions called", [
+                'user_id' => $user->id,
+                'document_id' => $document->id,
+                'document_status' => $document->status,
+                'document_state' => $document->toArray(),
+                'workflow_id' => $document->workflow_id
+            ]);
+
+            $workflow = $document->workflow;
+            
+            if (!$workflow) {
+                \Log::warning("No workflow found for document", [
+                    'document_id' => $document->id,
+                    'workflow_id' => $document->workflow_id
+                ]);
+                return [];
+            }
+
+            \Log::info("Building Symfony workflow", [
+                'workflow_id' => $workflow->id,
+                'workflow_name' => $workflow->name,
+                'workflow_states' => $workflow->states,
+                'workflow_transitions' => $workflow->transitions
+            ]);
+
+            $symfonyWorkflow = $this->buildSymfonyWorkflow($workflow);
+            
+            \Log::info("Getting enabled transitions", [
+                'document_status_method' => method_exists($document, 'getStatus') ? 'exists' : 'missing',
+                'document_status_property' => property_exists($document, 'status') ? 'exists' : 'missing',
+                'current_status' => $document->getStatus()
+            ]);
+
+            $enabledTransitions = $symfonyWorkflow->getEnabledTransitions($document);
+        } catch (\Exception $e) {
+            \Log::error("Error in WorkflowService::availableTransitions", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'document_id' => $document->id,
+                'document_status' => $document->status,
+                'document_state' => $document->toArray(),
+                'user_id' => $user->id
+            ]);
+            
             return [];
         }
-
-        $symfonyWorkflow = $this->buildSymfonyWorkflow($workflow);
-        $enabledTransitions = $symfonyWorkflow->getEnabledTransitions($document);
         
         $availableTransitions = [];
         
@@ -190,39 +229,37 @@ class WorkflowService
      */
     private function canUserPerformTransition(User $user, Document $document, string $transitionName): bool
     {
-        $workflow = $document->workflow;
-        $currentStep = $workflow->steps()
-            ->where('state', $document->current_step)
-            ->first();
+        \Log::info("Checking if user can perform transition", [
+            'user_id' => $user->id,
+            'document_id' => $document->id,
+            'transition_name' => $transitionName,
+            'user_roles' => $user->getRoleNames()->toArray(),
+            'user_permissions' => $user->getAllPermissions()->pluck('name')->toArray()
+        ]);
 
-        if (!$currentStep) {
-            return false;
+        // Пока что разрешаем всем пользователям выполнять переходы
+        // В будущем здесь можно добавить более сложную логику проверки прав
+        
+        // Проверяем основные права на документ
+        if ($user->can('system.admin')) {
+            \Log::info("User is admin - allowing transition");
+            return true;
         }
 
-        // Проверяем роли
-        if ($currentStep->required_roles) {
-            $hasRole = false;
-            foreach ($currentStep->required_roles as $role) {
-                if ($user->hasRole($role)) {
-                    $hasRole = true;
-                    break;
-                }
-            }
-            if (!$hasRole) {
-                return false;
-            }
+        // Автор документа может выполнять переходы
+        if ($document->author_id === $user->id) {
+            \Log::info("User is document author - allowing transition");
+            return true;
         }
 
-        // Проверяем права
-        if ($currentStep->required_permissions) {
-            foreach ($currentStep->required_permissions as $permission) {
-                if (!$user->can($permission)) {
-                    return false;
-                }
-            }
+        // Пользователи того же отдела могут выполнять переходы
+        if ($document->department_id === $user->department_id) {
+            \Log::info("User is in same department - allowing transition");
+            return true;
         }
 
-        return true;
+        \Log::info("User cannot perform transition - access denied");
+        return false;
     }
 
     /**

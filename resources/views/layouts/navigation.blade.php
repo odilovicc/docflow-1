@@ -118,6 +118,10 @@
                             {{ __('Отчеты') }}
                         </x-dropdown-link>
                         
+                        <x-dropdown-link :href="route('admin.workflows.index')">
+                            {{ __('Рабочие процессы') }}
+                        </x-dropdown-link>
+                        
                         <x-dropdown-link :href="route('admin.settings')">
                             {{ __('Настройки системы') }}
                         </x-dropdown-link>
@@ -215,6 +219,10 @@
                 
                 <x-responsive-nav-link :href="route('admin.reports')" :active="request()->routeIs('admin.reports')">
                     {{ __('Отчеты') }}
+                </x-responsive-nav-link>
+                
+                <x-responsive-nav-link :href="route('admin.workflows.index')" :active="request()->routeIs('admin.workflows.*')">
+                    {{ __('Рабочие процессы') }}
                 </x-responsive-nav-link>
                 
                 <x-responsive-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings')">

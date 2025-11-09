@@ -48,7 +48,7 @@ class WorkflowController extends Controller
         }
 
         return redirect()->back()
-            ->with('error', 'Ошибка при выполнении перехода.');
+            ->with('error', 'Не удалось выполнить переход.');
     }
 
     /**
@@ -82,9 +82,7 @@ class WorkflowController extends Controller
             abort(403, 'У вас нет доступа к этому документу.');
         }
 
-        $history = $this->workflowService->getWorkflowHistory($document);
-        
-        return view('documents.workflow-history', compact('document', 'history'));
+        return view('workflows.history', compact('document'));
     }
 
     /**
