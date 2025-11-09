@@ -5,46 +5,44 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Document;
+use App\Services\CacheService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DocumentController extends Controller
 {
+    protected CacheService $cacheService;
+
+    public function __construct(CacheService $cacheService)
+    {
+        $this->cacheService = $cacheService;
+    }
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $query = Document::with(['author', 'category', 'department']);
+        // Подготавливаем фильтры
+        $filters = [
+            'status' => $request->filled('status') ? $request->status : null,
+            'category_id' => $request->filled('category') ? $request->category : null,
+            'department_id' => $request->filled('department') ? $request->department : null,
+            'search' => $request->filled('search') ? $request->search : null,
+        ];
 
-        // Фильтрация по статусу
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        // Фильтрация по категории
-        if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
-        }
-
-        // Фильтрация по отделу
-        if ($request->filled('department')) {
-            $query->where('department_id', $request->department);
-        }
-
-        // Поиск по названию
-        if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
-        }
-
-        // Если не админ, показываем только документы своего отдела
+        // Если не админ, ограничиваем по отделу
         if (!Auth::user()->can('system.admin')) {
-            $query->where('department_id', Auth::user()->department_id);
+            $filters['department_id'] = Auth::user()->department_id;
         }
 
-        $documents = $query->orderBy('created_at', 'desc')->paginate(10);
-        $categories = Category::where('is_active', true)->get();
-        $departments = Department::all();
+        $page = $request->get('page', 1);
+        
+        // Получаем документы из кеша или базы данных
+        $documents = $this->cacheService->getDocumentsList($filters, $page, 10);
+        
+        // Получаем вспомогательные данные из кеша
+        $categories = $this->cacheService->getCategoriesList()->where('is_active', true);
+        $departments = $this->cacheService->getDepartmentsList();
 
         return view('documents.index', compact('documents', 'categories', 'departments'));
     }

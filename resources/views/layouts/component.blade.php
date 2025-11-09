@@ -4,8 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="description" content="@yield('description', 'DocsFlow - Система управления документооборотом')">
-        <meta name="keywords" content="@yield('keywords', 'документооборот, workflow, задачи, уведомления')">
+        <meta name="description" content="DocsFlow - Система управления документооборотом">
+        <meta name="keywords" content="документооборот, workflow, задачи, уведомления">
         <meta name="author" content="{{ config('app.name', 'DocsFlow') }}">
         
         <!-- Security Headers -->
@@ -17,7 +17,7 @@
         <link rel="icon" type="image/x-icon" href="/favicon.ico">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-        <title>@yield('title', config('app.name', 'DocsFlow')) - {{ config('app.name', 'DocsFlow') }}</title>
+        <title>{{ config('app.name', 'DocsFlow') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -28,7 +28,6 @@
         
         <!-- Additional Styles -->
         @stack('styles')
-        @yield('styles')
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
@@ -74,13 +73,12 @@
 
             <!-- Page Content -->
             <main>
-                @yield('content')
+                {{ $slot }}
             </main>
         </div>
         
         <!-- Additional Scripts -->
         @stack('scripts')
-        @yield('scripts')
         
         <!-- Auto-hide flash messages -->
         <script>

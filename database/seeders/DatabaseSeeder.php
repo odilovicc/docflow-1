@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             RolePermissionSeeder::class,
             CategorySeeder::class,
+            WorkflowSeeder::class,
         ]);
     }
 }
